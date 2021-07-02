@@ -517,3 +517,9 @@ min_score_thresh: 信心水準
 <img src="https://i.imgur.com/dyRuUpA.png" width=300px height=200px>
 <img src="https://i.imgur.com/vICSrnI.png" width=250px height=200px>
 <img src="https://i.imgur.com/it53kPf.png" width=300px height=200px>
+
+## Reference
+1. [LevinJ/tf_obj_detection_api](https://github.com/LevinJ/tf_obj_detection_api)
+2. [Waymo Open Dataset](https://waymo.com/open/)
+3. [Waymo quick start tutorial](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/r1.0/tutorial/tutorial.ipynb)
+4. [Tensorflow Object Detection API Tutorial](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/training.html)
