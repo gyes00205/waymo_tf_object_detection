@@ -1,4 +1,4 @@
-# Waymo Open Dataset: Tensorflow 2.0 Object Detection Development Record
+# Waymo Open Dataset: Tensorflow 2 Object Detection Development Record
 contributed by < `gyes00205` >
 ###### tags: `waymo`
 
@@ -114,7 +114,7 @@ Waymo
 ├───exported-models 
 └───data
     ├───processed
-    │   └───segment-???.tfrecord #處理後的 tfrecord
+    │   └───segment-???.tfrecord # processed tfrecord
     └───segment-???.tfrecord
 ```
 
