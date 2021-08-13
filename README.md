@@ -1,15 +1,15 @@
-# Waymo Open Dataset 開發紀錄
+# Waymo Open Dataset: Tensorflow 2.0 Object Detection Development Record
 contributed by < `gyes00205` >
 ###### tags: `waymo`
 
 ## Download Dataset
 [Waymo Open Dataset](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_2_0)
-domain_adaptation 的資料沒有 label ，所以請下載 training/ 的資料去訓練
+**domain_adaptation** directory doesn't have label data, so please download the data in **training** directory
 
-## tfrecord 內容
-* 五種 camera 所拍攝的照片以及 Lidar 資訊
+## tfrecord details
+* 5 kinds of camera photos and Lidar informations
 * num_classes: 0: Unknown, 1: Vehicle, 2: Pedestrian, 3: Sign, 4: Cyclist 
-    這次 project 不需要 sign 和 Unknown 這兩個 classes ，因此 label_map.pbtxt 修改如下:
+    In this project, we don't need sign and Unknown classes, so we should modify label_map.pbtxt :
 ```pbtxt 
 item {
     id: 1
@@ -26,78 +26,78 @@ item {
     name: 'cyclist'
 }
 ```
-* camera 種類: FRONT, FRONT_LEFT, FRONT_RIGHT, SIDE_LEFT, SIDE_RIGHT
+* camera categories: FRONT, FRONT_LEFT, FRONT_RIGHT, SIDE_LEFT, SIDE_RIGHT
     <img src="https://i.imgur.com/Q68Lepf.jpg">
-* bbox (x, y, w, h) 座標: , xy 代表 bbox 中心座標 , wh 代表寬和高
+* bbox (x, y, w, h) coordinate: (x, y) represents center coordinate of bbox, (w, h) represents width and height.
 
-## 環境配置
-### 安裝 Way open dataset
+## Setup Environment
+### Install Waymo open dataset
 ```shell 
 pip3 install waymo-open-dataset-tf-2-1-0==1.2.0
 ```
-### 安裝 COCO API
+### Install COCO API
 ```shell 
 pip install cython
 pip install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
 ```
-### 安裝 Tensorflow 2 Object Detection API
-參考 [TensorFlow 2 Object Detection API tutorial](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/index.html) 安裝套件
+### Install Tensorflow 2 Object Detection API
+Refer to [TensorFlow 2 Object Detection API tutorial](https://tensorflow-object-detection-api-tutorial.readthedocs.io/en/latest/index.html) to install toolkits
 * git clone Tensorflow 2 Object Detection API
 ```shell 
 git clone https://github.com/tensorflow/models.git
 ```
-* 到 models/research/ 執行
+* go to models/research/ and run
 ```shell 
 protoc object_detection/protos/*.proto --python_out=.
 ```
-* 將 API 加到環境變數
+* add API to your environment path
 ```
 export PYTHONPATH=$PYTHONPATH:`pwd`:`pwd`/slim
 ```
-* 複製 setup.py 到 models/research/
+* copy setup.py to models/research/
 ```shell 
 cp object_detection/packages/tf2/setup.py ./
 ```
-* 安裝 setup.py
+* install setup.py
 ```shell 
 python -m pip install .
 ```
-* 測試是否安裝成功
+* Test whether the installation is successful
 ```
 python object_detection/builders/model_builder_tf2_test.py
 ```
-### 建立資料夾結構
+### Build directory structure
 ```
 Waymo
 ├───models #Tensorflow Object Detection API
-├───training_configs #訓練用的 config
-├───pre-trained-models #預訓練模型
-├───exported-models #輸出模型
-└───data #訓練資料
+├───training_configs #training config
+├───pre-trained-models #pretrained model
+├───exported-models #exported model
+└───data #training data
     └───segment-???.tfrecord
 ```
-## 轉換 tfrecord 格式
-因為 waymo 的 tfrecord 除了有 Lidar 的資訊之外，他的 bbox 格式如下:
+##  Convert tfrecord format
+Besides of Lidar informations in waymo's tfrecord, the below is its bbox format:
 
-(x0, y0): 為中心點座標。 (w, h): 為長寬。
+(x0, y0): is center coordinate. (w, h): is width and height.
 
 ![](https://i.imgur.com/WSDKAQZ.png)
 
-而我們的目標是過濾掉 Lidar 並將 bbox 轉為以下格式:
+Our goal is to filter out Lidar and convert bbox to the following format:
 
-(x1, y1): 為左上角座標。 (x2, y2): 為右下角座標。
+(x1, y1): is left-top coordinate. (x2, y2): is right-down coordinate.
 
 ![](https://i.imgur.com/HyR6xS0.png)
 
-轉換 tfrecord 的程式碼參考 [LevinJ/tf_obj_detection_api](https://github.com/LevinJ/tf_obj_detection_api)，並且做一些小修改。
+The reference code that convert tfrecord is [LevinJ/tf_obj_detection_api](https://github.com/LevinJ/tf_obj_detection_api), and make some minor changes.
 
 **create_record.py:**
 
-filepath: tfrecord 的路徑
+filepath: the path of tfrecord 
 
-data_dir: 轉換過後的 tfrecord 會儲存在 data_dir/processed 目錄下
+data_dir: the converted tfrecord will be stored in the data_dir/processed directory
 
-執行方式如下:
+Execute code:
     
 ```shell 
 python create_record.py \
@@ -105,7 +105,7 @@ python create_record.py \
 --data_dir=data/
 ```
     
-執行完後 data/processed 便會出現處理完的 tfrecord。
+After executing th code, the processed tfrecord will appear in data/processed directory.
 ```
 Waymo
 ├───models
@@ -118,23 +118,23 @@ Waymo
     └───segment-???.tfrecord
 ```
 
-## 下載預訓練模型
-到 [Tensorflow Model Zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md) 下載 pretrained model。
+## Download pretrained model
+go to [Tensorflow Model Zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md) and download pretrained model.
 
 ![](https://i.imgur.com/x34zpZL.png)
 
-我下載的是 `SSD ResNet50 V1 FPN 640x640 (RetinaNet50)`。 
-* 先到 pre-trained-models 目錄下
+I download `SSD ResNet50 V1 FPN 640x640 (RetinaNet50)` pretrained model. 
+* go to pre-trained-models directory.
 
 `cd pre-trained-models`
 
-* 下載 SSD ResNet50 的 pretrained model
+* download SSD ResNet50 pretrained model
 
 ```
 wget http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz
 ```
 
-* 解壓縮
+* unzip the file
 
 `tar zxvf ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz`
 
@@ -150,31 +150,31 @@ Waymo
 ├───exported-models 
 └───data
     ├───processed
-    │   └───segment-???.tfrecord #處理後的 tfrecord
+    │   └───segment-???.tfrecord #processed tfrecord
     └───segment-???.tfrecord
 ```
 
-## 修改訓練用 config
-到 [configs/tf2](https://github.com/tensorflow/models/tree/master/research/object_detection/configs/tf2) 找到與 pretrained model 相對應的 config，也就是ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.config
+## Modify training config
+Go to [configs/tf2](https://github.com/tensorflow/models/tree/master/research/object_detection/configs/tf2), and find corresponding config that is ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.config
 
-* 在 training_configs 新增資料夾
+* Create folder in training_configs directory
 
 ```shell 
 cd training_configs
 mkdir ssd_resnet50_v1_fpn_640x640_coco17_tpu-8
 ```
 
-* 在 ssd_resnet50_v1_fpn_640x640_coco17_tpu-8 目錄下新增 pipeline.config，並將剛剛找到的 config 內容複製貼上，並且做一些修改。
-    * num_classes: 種類個數
-    * batch_size: bach size 大小，根據電腦的記憶體而有不同設置
-    * fine_tune_checkpoint: 更改成 pretrained model 的 ckpt-0 路徑
-    * num_steps: 訓練步數
-    * use_bfloat16: 是否使用 tpu，沒有使用設定為 false
-    * label_map_path: label_map.pbtxt 路徑
-    * train_input_reader: 將 input_path 設定成訓練用的 tfrecord 路徑
+* Create pipeline.config in ssd_resnet50_v1_fpn_640x640_coco17_tpu-8 directory. Copy and paste the config content you just found, and make some modifications.
+    * num_classes: number of classes 
+    * batch_size: according to your computer memory
+    * fine_tune_checkpoint: modify to pretrained model ckpt-0 path
+    * num_steps: training steps
+    * use_bfloat16: whether to use tpu, if not used, set to false
+    * label_map_path: label_map.pbtxt path
+    * train_input_reader: set input_path to the tfrecord path for training
     * metrics_set: "coco_detection_metrics"
     * use_moving_averages: false
-    * eval_input_reader: 將 input_path 設定成評估用用的 tfrecord 路徑
+    * eval_input_reader: Set input_path to the tfrecord path for evaluating
 
 ```config
 # SSD with Resnet 50 v1 FPN feature extractor, shared box predictor and focal
@@ -189,7 +189,7 @@ model {
   ssd {
     inplace_batchnorm_update: true
     freeze_batchnorm: false
-    num_classes: 3 #因為種類有 3 個
+    num_classes: 3 # 3 kinds of classes
     box_coder {
       faster_rcnn_box_coder {
         y_scale: 10.0
@@ -314,15 +314,15 @@ model {
 
 train_config: {
   fine_tune_checkpoint_version: V2
-  #pretrained model 的 ckpt-0 位置
+  #pretrained model ckpt-0 path
   fine_tune_checkpoint: "pre-trained-models/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/checkpoint/ckpt-0" 
-  fine_tune_checkpoint_type: "detection" #改為 detection
+  fine_tune_checkpoint_type: "detection" # set to detection
   batch_size: 2
   sync_replicas: true
   startup_delay_steps: 0
   replicas_to_aggregate: 8
-  use_bfloat16: false #因為沒有使用 tpu 所以改為 false
-  num_steps: 6000 #訓練步數
+  use_bfloat16: false # if not use tpu, set to false
+  num_steps: 6000 # training steps
   data_augmentation_options {
     random_horizontal_flip {
     }
@@ -381,7 +381,7 @@ Waymo
 ├───models
 ├───training_configs 
 │   └───ssd_resnet50_v1_fpn_640x640_coco17_tpu-8
-│       └───pipeline.config #新增 pipeline.config
+│       └───pipeline.config # create pipeline.config
 ├───pre-trained-models 
 │   └───ssd_resnet50_v1_fpn_640x640_coco17_tpu-8
 │       ├─ checkpoint/
@@ -393,22 +393,22 @@ Waymo
     │   └───segment-???.tfrecord
     └───segment-???.tfrecord
 ```
-## 訓練模型
+## Train Model
 
 **model_main_tf2.py**
 
-model_dir: 會將訓練的 checkpoint 儲存在 model_dir 目錄下
+model_dir: the training checkpoint will be stored in the model_dir directory
 
-pipeline_config_path: pipeline.config 路徑
+pipeline_config_path: pipeline.config path
 
-執行方式如下: 
+Execute code: 
 
 ```shell 
 python model_main_tf2.py \
 --model_dir=training_configs/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8 \
 --pipeline_config_path=training_configs/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/pipeline.config
 ```
-執行結果如下: 每 100 steps 會印一次。
+Execution results: it will be printed every 100 steps.
 ```
 Step 2100 per-step time 0.320s
 INFO:tensorflow:{'Loss/classification_loss': 0.121629156,
@@ -423,12 +423,12 @@ I0605 08:29:04.605577 139701982308224 model_lib_v2.py:700] {'Loss/classification
  'learning_rate': 0.039998136}
 ```
 
-## 評估模型 (Optional)
+## Evaluate Model (Optional)
 **model_main_tf2.py**
 
-checkpoint_dir: 讀取 checkpoint 的目錄。
+checkpoint_dir: the directory to read checkpoint.
 
-執行方式如下: 
+Execute code: 
 
 ```shell 
 python model_main_tf2.py \
@@ -436,7 +436,7 @@ python model_main_tf2.py \
 --pipeline_config_path=training_configs/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/pipeline.config \
 --checkpoint_dir=training_configs/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/ 
 ```
-執行結果: 會計算 AP 和 AR
+Execution results: calculate AP and AR
 
 $AP^{small}:$ AP for small object : area < $32^2$
 
@@ -446,18 +446,18 @@ $AP^{large}:$ AP for large object : $96^2$ < area
 
 ![](https://i.imgur.com/RjN2dRf.png)
 
-## 輸出模型
+## Export Model
 **exporter_main_v2.py**
 
 input_type: image_tensor
 
-pipeline_config_path:  pipeline.config 的路徑
+pipeline_config_path:  pipeline.config path
 
-trained_checkpoint_dir: 儲存 checkpoint 的位置
+trained_checkpoint_dir: the path to store checkpoint
 
-output_directory: 輸出模型位置
+output_directory: exported model path
 
-執行方式如下: 
+Execute code: 
 
 ```shell 
 !python exporter_main_v2.py \
@@ -466,7 +466,7 @@ output_directory: 輸出模型位置
 --trained_checkpoint_dir training_configs/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/  \
 --output_directory exported-models/my_model_6000steps
 ```
-執行結果如下:
+Execution results:
 ```shell 
 INFO:tensorflow:Assets written to: exported-models/my_model_6000steps/saved_model/assets
 I0605 09:07:21.034602 139745385867136 builder_impl.py:775] Assets written to: exported-models/my_model_6000steps/saved_model/assets
@@ -478,7 +478,7 @@ Waymo
 ├───models
 ├───training_configs 
 │   └───ssd_resnet50_v1_fpn_640x640_coco17_tpu-8
-│       └─pipeline.config #新增 pipeline.config
+│       └─pipeline.config # create pipeline.config
 ├───pre-trained-models 
 │   └───ssd_resnet50_v1_fpn_640x640_coco17_tpu-8
 │       ├─ checkpoint/
@@ -491,18 +491,18 @@ Waymo
     │   └─segment-???.tfrecord
     └───segment-???.tfrecord
 ```
-## 使用模型預測圖片
+## Use model to predict
 **detect.py**
 
-saved_model_path: 模型位置
+saved_model_path: exported model path
 
-test_path: 測試圖片位置
+test_path: image path
 
-output_path: 輸出預測圖片位置
+output_path: output predicted image path
 
-min_score_thresh: 信心水準
+min_score_thresh: confidience
 
-執行方式如下:
+Execute code:
 
 ```shell 
 !python detect.py \
@@ -511,7 +511,7 @@ min_score_thresh: 信心水準
 --output_path=output_image \
 --min_score_thresh=.1
 ```
-預測結果:
+Execution results:
 
 <img src="https://i.imgur.com/NNE6OuI.png" width=250px height=200px> 
 <img src="https://i.imgur.com/dyRuUpA.png" width=300px height=200px>
