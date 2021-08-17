@@ -91,6 +91,6 @@ for filename in TOTAL_TEST_IMAGES:
           min_score_thresh=MIN_SCORE_THRESH,
           agnostic_mode=False)
 
-    cv2.imwrite(os.path.join(PATH_TO_OUTPUT_IMAGE, filename), image_np_with_detections)
+    cv2.imwrite(os.path.join(PATH_TO_OUTPUT_IMAGE, filename), image_np_with_detections[:,:,::-1])
     print('Done')
 
